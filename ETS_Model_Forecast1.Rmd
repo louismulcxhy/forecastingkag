@@ -1,0 +1,111 @@
+---
+title: "Baseline notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This **notebook** implements a **baseline model** to solve the forecast problem. The goal is to show you an initial path towards the solution
+and also to show you how to generate the solution file ("csv") that needs to be uploaded in Kaggle. The performance of that baseline algorithm is not good and your goal is to try  different methodologies to improve this forecast.
+
+
+
+```{r}
+library("fpp2")
+```
+
+
+
+```{r}
+# we load the first time series
+h=18 # forecast horizon
+name <- paste("./train/train",1,sep="")
+name <- paste(name,".csv",sep="")#add file extension
+y<- as.matrix(read.csv(name))#load data
+data <- ts(data = y, frequency = 12)#we transform it into a time-series
+data_te <- subset(data, start = length(data)-18+1)#Test data (last 18 points, not sure if we need this)
+data_tr <- subset(data, end = length(data)-18)#Training data (again, not sure if we need this)
+
+fmodel_ets <- ets(data, model="ZZZ", damped=NULL, alpha=NULL, beta=NULL,
+    gamma=NULL, phi=NULL, lambda=NULL, biasadj=FALSE,
+    additive.only=FALSE, restrict=TRUE,
+    allow.multiplicative.trend=FALSE) #ETS model for our first ts
+fcast_ets <- forecast(fmodel_ets, h = 18)#Forecast for that ETS
+
+
+fcast_ets_function  <- function(y, h) forecast(ets(y,model="ZZZ", damped=NULL, alpha=NULL, beta=NULL,
+    gamma=NULL, phi=NULL, lambda=NULL, biasadj=FALSE,
+    additive.only=FALSE, restrict=TRUE,
+    allow.multiplicative.trend=FALSE)) #Forecast Function for the Cross Validation Function
+
+ets_cv <- tsCV(data, fcast_ets_function,h = 18) #Calculating the cross validations on the last 18 points
+
+err1 <- ets_cv
+mae1 <- mean(abs(err1), na.rm=TRUE) #Calculating the MAE for the first time series with cross validation on the last 18 points
+
+index = 1:h
+mae_index = c(1:600)
+df <- cbind(index, as.matrix(fcast_ets$mean)) #Data Frame with first 18 predictions ahead with ETS
+mae_df <- cbind(mae_index, as.matrix(mae1), fmodel_ets$method) #Creating a data frame for the MAE values
+mae_df
+
+for (i in 2:600){
+  name <- paste("./train/train",i,sep="")
+  name<- paste(name,".csv",sep="")
+  #print(name)
+  y<- as.matrix(read.csv(name))#load data
+  data <- ts(data = y, frequency = 12) 
+  #this is my model
+  fmodel_ets <- ets(data, model="ZZZ", damped=NULL, alpha=NULL, beta=NULL,
+    gamma=NULL, phi=NULL, lambda=NULL, biasadj=FALSE,
+    additive.only=FALSE, restrict=TRUE,
+    allow.multiplicative.trend=FALSE)
+  fcast_ets <- forecast(fmodel_ets, h = 18)# we run the model and predict 18 steps ahead
+  predictions <- as.matrix(fcast_ets$mean)
+  #save the forecast
+  df<-rbind(df,cbind(as.integer(nrow(df)+index),predictions) )
+  ets_cv <- tsCV(data, fcast_ets_function,h = 18)
+  err1 <- ets_cv
+  mae1 <- mean(abs(err1), na.rm=TRUE)
+  mae_df <- rbind(mae_df,cbind(i,mae1,fmodel_ets$method))
+  print(i)
+  mae_index <- mae_index+1
+}
+
+
+```
+
+So the code above generates two different data frames, the first one being df, which holds the $18*600$ predictions from all of the time series forecasts, each using the automatic ETS model selection, while the other is mae_df, which contains the mean absolute error for the 600 ETS models, using the last 18 points of the time series for cross validation, alongside a label for which type of ETS model was used.
+
+
+We have the mean of the MAE Values from each of the 600 ETS Forecasts
+
+```{r}
+
+ETS_MAE_mean <- mean(as.numeric(mae_df[,2]))
+```
+
+Making the csv File for the table of predictions, and one for the 600 MAE Values
+
+```{r}
+
+write.table(df, file ="prediction_ETS_1.csv", 
+          col.names = c("Id","Predicted"),
+          sep=",",
+          row.names=FALSE)
+
+write.table(mae_df, file ="ETS_MAE_1.csv", 
+          col.names = c("Id","MAE Value","ETS Method"),
+          sep=",",
+          row.names=FALSE)
+
+
+
+
+```
+
+
+
+
+
+
