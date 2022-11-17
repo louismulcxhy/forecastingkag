@@ -1,12 +1,11 @@
 ---
-title: "Baseline notebook"
+title: "ETS Forecast Notebook"
 output:
   html_document:
     df_print: paged
 ---
 
-This **notebook** implements a **baseline model** to solve the forecast problem. The goal is to show you an initial path towards the solution
-and also to show you how to generate the solution file ("csv") that needs to be uploaded in Kaggle. The performance of that baseline algorithm is not good and your goal is to try  different methodologies to improve this forecast.
+
 
 
 
