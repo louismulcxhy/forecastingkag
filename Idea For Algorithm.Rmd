@@ -1,0 +1,26 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+an algorithm that takes in all of the 600 time series, then computes each type of forecast for the specific time series, then calculates the MAE for that model, and picks the model which has the lowest MAE value. This may take too long to run for it to be feasible.
+
+The format should be something like:
+
+-read in first time series
+
+-calculate forecast for each of the methods ets, arima, global on the first time series 
+
+-compute cross validation for each of these and then MAE for the cross validation on each of them.
+
+-identify which has the lowest MAE and add the 18 forecast predictions of this model to the data frame as we have been doing. 
+
+-start the for loop for 2:600, and have it run essentially the same code as we have for the first time series. 
+-so to determine the best model to use, we could have something like:
+
+if(min(ETS_MAE,ARIMA_MAE,global_MAE) = ETS_MAE){add the ETS 18 ETS
+Forecasts to the data frame}
+
+else if(...){etc}
+
+else{etc}
